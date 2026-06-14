@@ -3,6 +3,6 @@ __pycache__/
 *.pyo
 venv/
 .venv/
-models/*.pt
+*.pt
 *.egg-info/
 dist/
