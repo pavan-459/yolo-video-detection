@@ -6,6 +6,14 @@ import Video from './models/Video';
 
 const ML_SERVER = process.env.ML_SERVER_URL || 'http://localhost:5000';
 
+// Point fluent-ffmpeg at the winget-installed binary so it works
+// regardless of which terminal PATH the Node process inherited.
+const FFMPEG_PATH =
+  process.env.FFMPEG_PATH ||
+  'C:\\Users\\Pavan Krishna N\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-8.1.1-full_build\\bin\\ffmpeg.exe';
+
+ffmpeg.setFfmpegPath(FFMPEG_PATH);
+
 export async function processVideo(uploadId: string, filePath: string) {
   const framesDir = path.join(process.cwd(), 'uploads', 'frames', uploadId);
   fs.mkdirSync(framesDir, { recursive: true });
