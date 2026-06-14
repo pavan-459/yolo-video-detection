@@ -1,0 +1,83 @@
+Thanks for your interest in the MERN Developer role at Navasoftware.
+
+We enjoyed reviewing your profile and would like to move you to the first round – a small take-home assignment.
+
+Assignment Overview:
+
+You’ll be building a mini MERN app (basic CRUD with authentication). Details are attached.
+
+Timeline: Please submit within [e.g., 48–72 hours] from this email.
+
+Guidelines:
+
+Use MongoDB, Express, React, Node.js, flask
+
+Share a GitHub link and a short video/readme on how to run the project
+
+We’re excited to see your coding style and problem-solving approach.
+
+Let me know if you have any questions – happy to clarify.
+
+Looking forward to your submission
+
+ 
+
+Thanks and Regards,
+Arathi
+
+Step-by-Step Tasks
+
+1. Project Setup
+ Create monorepo with /client, /server, /ml-server folders
+ Initialize Git with meaningful commits
+ Set up environment variables for each service
+
+2. Database Design
+ Design MongoDB schemas: Video (uploadId, filename, status, framesData,
+results, timestamps)
+ Set up Mongoose models and connection
+
+3. Backend Development
+ Implement video upload endpoint with multer (validation: mp4/mov, max
+100MB)
+ Generate unique uploadId, store file, save to database
+ Create GET endpoints for status and results
+ Set up Socket.IO for real-time status updates
+
+4. Video Processing Service
+ Create service to monitor pending uploads
+ Implement FFmpeg frame extraction at 1 frame per second
+ Send frames to Flask ML server via HTTP POST
+ Store detection results with timestamps in database
+ Emit socket events during processing phases
+
+5. Flask ML Server
+ Create Flask app with CORS enabled
+ Load pre-trained object detection model (YOLO) at startup
+ Build POST /detect endpoint accepting images
+ Return JSON with bounding boxes, class labels, confidence scores
+
+6. Frontend Development
+ Build VideoUploader component with drag-and-drop support
+
+ Create video player for playback
+ Implement upload with progress tracking
+ Connect Socket.IO for real-time status updates
+ Display processing status: pending → extracting → detecting → completed
+
+7. Results Visualization
+ Display detected objects list with timestamps and confidence scores
+ Create timeline with object occurrence markers
+ Render bounding boxes overlay on video frames
+ Allow downloading results as JSON
+
+8. Integration &amp; Testing
+ Test complete flow: upload → process → detect → display
+ Verify real-time updates across all stages
+ Test error scenarios: invalid files, ML server down
+ Implement cleanup for temporary files
+
+9. Documentation
+ Write setup instructions with commands
+ Document API endpoints
+ Submit GitHub repository with video recording

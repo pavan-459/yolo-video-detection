@@ -1,0 +1,22 @@
+# Next.js
+app/.next/
+app/out/
+app/node_modules/
+app/uploads/
+app/.env.local
+app/.env*.local
+
+# ML server
+ml-server/__pycache__/
+ml-server/venv/
+ml-server/.venv/
+ml-server/models/*.pt
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
