@@ -6,13 +6,11 @@ import Video from './models/Video';
 
 const ML_SERVER = process.env.ML_SERVER_URL || 'http://localhost:5000';
 
-// Point fluent-ffmpeg at the winget-installed binary so it works
-// regardless of which terminal PATH the Node process inherited.
-const FFMPEG_PATH =
-  process.env.FFMPEG_PATH ||
-  'C:\\Users\\Pavan Krishna N\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-8.1.1-full_build\\bin\\ffmpeg.exe';
-
-ffmpeg.setFfmpegPath(FFMPEG_PATH);
+// Only override the ffmpeg path if explicitly set in the environment.
+// Otherwise fluent-ffmpeg auto-detects from the system PATH.
+if (process.env.FFMPEG_PATH) {
+  ffmpeg.setFfmpegPath(process.env.FFMPEG_PATH);
+}
 
 function emit(uploadId: string, event: string, data: unknown) {
   if (global.io) global.io.to(uploadId).emit(event, data);
@@ -63,15 +61,8 @@ export async function processVideo(uploadId: string, filePath: string) {
   };
 
   try {
-    // Verify the uploaded file still exists
     if (!fs.existsSync(filePath)) {
       await fail('Uploaded file not found on disk');
-      return;
-    }
-
-    // Verify FFmpeg binary is accessible
-    if (!fs.existsSync(FFMPEG_PATH)) {
-      await fail(`FFmpeg not found at: ${FFMPEG_PATH}. Set FFMPEG_PATH in .env.local`);
       return;
     }
 
@@ -97,7 +88,6 @@ export async function processVideo(uploadId: string, filePath: string) {
     for (let i = 0; i < frames.length; i++) {
       const framePath = path.join(framesDir, frames[i]);
       const objects = await detectFrame(framePath);
-
       results.push({ frameIndex: i, timestamp: i, objects });
       emit(uploadId, 'progress', { uploadId, frame: i, total: frames.length });
     }
@@ -109,22 +99,13 @@ export async function processVideo(uploadId: string, filePath: string) {
     const message = err instanceof Error ? err.message : 'Unknown processing error';
     await fail(message);
   } finally {
-    // Always clean up temp frames, even on failure
+    // Clean up temp frames only — keep the original upload file for video streaming
     try {
       if (fs.existsSync(framesDir)) {
         fs.rmSync(framesDir, { recursive: true, force: true });
       }
     } catch (cleanupErr) {
       console.warn(`[processVideo] Failed to clean up frames for ${uploadId}:`, cleanupErr);
-    }
-
-    // Clean up the original upload file after processing
-    try {
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-      }
-    } catch (cleanupErr) {
-      console.warn(`[processVideo] Failed to delete upload file ${filePath}:`, cleanupErr);
     }
   }
 }
