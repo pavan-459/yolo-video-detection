@@ -1,5 +1,6 @@
 import base64
 import io
+import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from PIL import Image
@@ -8,7 +9,15 @@ from ultralytics import YOLO
 app = Flask(__name__)
 CORS(app)
 
-model = YOLO("yolov8n.pt")  # Downloads automatically on first run
+# 20 MB max request size — base64 encoding inflates ~33%, so this covers ~15 MB raw images
+app.config['MAX_CONTENT_LENGTH'] = 20 * 1024 * 1024
+
+model = YOLO("yolov8n.pt")
+
+# Warm the model with a blank image so the first real request isn't slow
+_warmup = Image.new("RGB", (64, 64))
+model(_warmup, verbose=False)
+del _warmup
 
 
 @app.route("/health", methods=["GET"])
@@ -48,4 +57,5 @@ def detect():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    # Dev only — production uses Gunicorn (see Dockerfile)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=False)

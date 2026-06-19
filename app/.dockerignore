@@ -1,0 +1,10 @@
+node_modules
+.next
+uploads
+.env.local
+.env*.local
+*.md
+.git
+.gitignore
+CLAUDE.md
+AGENTS.md

@@ -8,7 +8,7 @@ export interface DetectionResult {
   objects: Array<{
     label: string;
     confidence: number;
-    bbox: [number, number, number, number]; // [x, y, width, height]
+    bbox: [number, number, number, number];
   }>;
 }
 
@@ -18,7 +18,6 @@ export interface IVideo extends Document {
   originalName: string;
   status: VideoStatus;
   userId: mongoose.Types.ObjectId;
-  framesData: string[];
   results: DetectionResult[];
   error?: string;
   createdAt: Date;
@@ -26,20 +25,12 @@ export interface IVideo extends Document {
 }
 
 const DetectionObjectSchema = new Schema(
-  {
-    label: String,
-    confidence: Number,
-    bbox: [Number],
-  },
+  { label: String, confidence: Number, bbox: [Number] },
   { _id: false }
 );
 
 const DetectionResultSchema = new Schema(
-  {
-    frameIndex: Number,
-    timestamp: Number,
-    objects: [DetectionObjectSchema],
-  },
+  { frameIndex: Number, timestamp: Number, objects: [DetectionObjectSchema] },
   { _id: false }
 );
 
@@ -54,11 +45,13 @@ const VideoSchema = new Schema<IVideo>(
       default: 'pending',
     },
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    framesData: [String],
     results: [DetectionResultSchema],
     error: String,
   },
   { timestamps: true }
 );
+
+// Speeds up dashboard list queries (user's videos sorted by newest)
+VideoSchema.index({ userId: 1, createdAt: -1 });
 
 export default mongoose.models.Video || mongoose.model<IVideo>('Video', VideoSchema);

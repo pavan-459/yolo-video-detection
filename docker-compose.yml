@@ -8,15 +8,48 @@ services:
     volumes:
       - mongo_data:/data/db
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      start_period: 20s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   ml-server:
     build: ./ml-server
     ports:
       - "5000:5000"
     volumes:
-      # Cache downloaded YOLO model weights across restarts
-      - yolo_cache:/app
+      - yolo_cache:/home/appuser/.config
     restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
+      interval: 30s
+      timeout: 10s
+      start_period: 90s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          # PyTorch + YOLOv8 needs ~1.5 GB; 2 GB gives headroom
+          memory: 2g
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   app:
     build: ./app
@@ -25,15 +58,35 @@ services:
     environment:
       - MONGODB_URI=mongodb://mongo:27017/pixellens
       - NEXTAUTH_URL=http://localhost:3000
-      # Change this to a random 32+ character string before deploying
-      - NEXTAUTH_SECRET=change-me-to-a-real-secret-before-deploying
+      # REQUIRED: set a real random secret before running in production
+      # Generate one with: openssl rand -base64 32
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-change-me-generate-with-openssl-rand-base64-32}
       - ML_SERVER_URL=http://ml-server:5000
+      # Set to 2 to match Gunicorn worker count
+      - DETECTION_CONCURRENCY=2
     volumes:
       - uploads:/app/uploads
     depends_on:
-      - mongo
-      - ml-server
+      mongo:
+        condition: service_healthy
+      ml-server:
+        condition: service_healthy
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/auth/providers"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   mongo_data:

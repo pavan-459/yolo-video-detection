@@ -3,7 +3,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface DetectionObject {
   label: string;
   confidence: number;
-  bbox: [number, number, number, number]; // [x, y, width, height]
+  bbox: [number, number, number, number];
 }
 
 export interface IImage extends Document {
@@ -18,11 +18,7 @@ export interface IImage extends Document {
 }
 
 const DetectionObjectSchema = new Schema(
-  {
-    label: String,
-    confidence: Number,
-    bbox: [Number],
-  },
+  { label: String, confidence: Number, bbox: [Number] },
   { _id: false }
 );
 
@@ -38,4 +34,8 @@ const ImageSchema = new Schema<IImage>(
   { timestamps: true }
 );
 
+// Speeds up dashboard list queries
+ImageSchema.index({ userId: 1, createdAt: -1 });
+
+// Registered as 'PixelImage' to avoid collision with the global Image constructor
 export default mongoose.models.PixelImage || mongoose.model<IImage>('PixelImage', ImageSchema);
