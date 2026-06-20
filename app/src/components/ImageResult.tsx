@@ -136,20 +136,49 @@ export default function ImageResult({ imageId, originalName, objects }: Props) {
         <p className="text-sm text-gray-500 text-center py-6">No objects detected in this image.</p>
       )}
 
-      <button
-        onClick={() => {
-          const blob = new Blob([JSON.stringify(objects, null, 2)], { type: 'application/json' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `${imageId}-detections.json`;
-          a.click();
-          URL.revokeObjectURL(url);
-        }}
-        className="text-sm text-violet-600 hover:underline"
-      >
-        Export JSON
-      </button>
+      <div className="flex gap-4">
+        <button
+          onClick={() => {
+            const blob = new Blob([JSON.stringify(objects, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${imageId}-detections.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+          }}
+          className="text-sm text-violet-600 hover:underline"
+        >
+          Export JSON
+        </button>
+
+        {imgLoaded && (
+          <button
+            onClick={() => {
+              const img = imgRef.current;
+              const canvas = canvasRef.current;
+              if (!img || !canvas) return;
+
+              // Composite: draw original image then overlay boxes on an offscreen canvas
+              const out = document.createElement('canvas');
+              out.width = img.clientWidth;
+              out.height = img.clientHeight;
+              const ctx = out.getContext('2d');
+              if (!ctx) return;
+              ctx.drawImage(img, 0, 0, out.width, out.height);
+              ctx.drawImage(canvas, 0, 0);
+
+              const a = document.createElement('a');
+              a.href = out.toDataURL('image/png');
+              a.download = `${imageId}-annotated.png`;
+              a.click();
+            }}
+            className="text-sm text-violet-600 hover:underline"
+          >
+            Download annotated image
+          </button>
+        )}
+      </div>
     </div>
   );
 }
